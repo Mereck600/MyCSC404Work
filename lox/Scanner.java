@@ -33,7 +33,20 @@ public class Scanner {
         keywords.put("true", TRUE);
         keywords.put("var", VAR);
         keywords.put("while", WHILE);
-    }
+        keywords.put("var", VAR);
+        keywords.put("true", TRUE);
+        keywords.put("false", FALSE);
+        keywords.put("nil", NIL);
+        keywords.put("and", AND);
+        keywords.put("or", OR);
+        keywords.put("if", IF);
+        keywords.put("else", ELSE);
+        keywords.put("for", FOR);
+        keywords.put("while", WHILE);
+        keywords.put("print", PRINT);
+        keywords.put("return", RETURN);
+        keywords.put("break", BREAK);
+            }
 
     Scanner(String source) {
         this.source = source;
@@ -51,7 +64,8 @@ public class Scanner {
 
     private void scanToken() {
         char c = advance();
-        switch (c) {    
+        switch (c) { 
+               
             case '(' -> addToken(LEFT_PAREN);                       // .nah.   updated switch syntax 
             case ')' -> addToken(RIGHT_PAREN);
             case '{' -> addToken(LEFT_BRACE);
@@ -62,7 +76,8 @@ public class Scanner {
             case '+' -> addToken(PLUS);
             case ';' -> addToken(SEMICOLON);
             case '*' -> addToken(STAR);
-
+            case '?' -> addToken(TokenType.QUESTION); 
+            case ':'-> addToken(TokenType.COLON);
             case '!' -> addToken(match('=') ? BANG_EQUAL : BANG);
             case '=' -> addToken(match('=') ? EQUAL_EQUAL : EQUAL);
             case '<' -> addToken(match('=') ? LESS_EQUAL : LESS);

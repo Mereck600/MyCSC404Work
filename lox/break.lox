@@ -1,0 +1,17 @@
+for (var i = 0; i < 10; i = i + 1) {
+  if (i == 3) break;
+  print i;
+}
+// should be 0 1 2 
+
+var x = 0;
+while (true) {
+  x = x + 1;
+  if (x > 2) {
+    if (true) { break; }
+  }
+  print "looping"; // should print twice
+}
+print x; // should be 3 3
+
+break; // should be err
