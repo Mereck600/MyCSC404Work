@@ -6,3 +6,6 @@ print false ? "yes" : "no";  // expect no
 
 print true ? "a" : false ? "b" : "c";  // expect a
 print false ? "a" : false ? "b" : "c"; // expect c
+//print f;
+var g =nil;
+print g;
