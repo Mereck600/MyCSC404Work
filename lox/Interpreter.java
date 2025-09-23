@@ -2,13 +2,77 @@ package lox;
 
 import java.util.List;
 
+import lox.Expr.Call;
 import lox.Expr.Comma;
 import lox.Expr.Ternary;
 import lox.Stmt.Break;
+import lox.Stmt.Function;
+
+import java.util.ArrayList;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     
-    private Environment environment = new Environment();
+    final Environment globals = new Environment();
+    private Environment environment = globals;
+
+    Interpreter() {
+        globals.define("clock", new LoxCallable() {
+            @Override
+            public int arity() { return 0; }
+
+            @Override
+            public Object call(Interpreter interpreter,
+                                List<Object> arguments) {
+                return (double)System.currentTimeMillis() / 1000.0;
+            }
+
+            @Override
+            public String toString() { return "<native fn clock>"; }
+        });
+
+        globals.define("str", new LoxCallable() {
+            @Override public int arity() { return 1; }
+            @Override public Object call(Interpreter i, List<Object> args) {
+                // since stringify handels null we dont have to worry
+                return i.stringify(args.get(0));
+            }
+            @Override public String toString() { return "<native fn str>"; }
+            });
+
+        globals.define("exit", new LoxCallable() {
+            @Override public int arity() { return 0; }
+            @Override public Object call(Interpreter i, List<Object> args) {
+                System.exit(0);
+                return null; //need bc otherwise get error 
+            }
+            @Override public String toString() { return "<native fn exit>"; }
+        });
+        globals.define("type", new LoxCallable() {
+            @Override public int arity() { return 1; }
+            @Override public Object call(Interpreter i, List<Object> args) {
+                Object v = args.get(0);
+                String t;
+                if (v == null) {
+                    t = "nil";
+                } else if (v instanceof Double) {
+                    t = "number";
+                } else if (v instanceof String) {
+                    t = "string";
+                } else if (v instanceof Boolean) {
+                    t = "bool";
+                } else if (v instanceof LoxCallable) {
+                    t = "function";
+                } else {
+                    t = "object"; 
+                }
+                return t;
+            }
+            @Override public String toString() { return "<native fn type>"; }
+            });
+
+
+
+  }
     
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
@@ -118,7 +182,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         evaluate(stmt.expression);
         return null;
     }
-    
+
+      @Override
+        public Void visitFunctionStmt(Stmt.Function stmt) {
+            LoxFunction function = new LoxFunction(stmt, environment);
+            environment.define(stmt.name.lexeme, function);
+            return null;
+        }
+            
     @Override
     public Void visitIfStmt(Stmt.If stmt) {
         if (isTruthy(evaluate(stmt.condition))) {
@@ -135,6 +206,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         System.out.println(stringify(value));
         return null;
     }
+
+      @Override
+        public Void visitReturnStmt(Stmt.Return stmt) {
+            Object value = null;
+            if (stmt.value != null) value = evaluate(stmt.value);
+
+            throw new Return(value);
+        }
     
     @Override
     public Void visitVarStmt(Stmt.Var stmt) {
@@ -225,7 +304,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
     }
     
-    private String stringify(Object object) {
+    public String stringify(Object object) { //i use this for the native and changed from private to public hope this right
         if (object == null) return "nil";
         
         if (object instanceof Double) {
@@ -270,6 +349,33 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         //throw new UnsupportedOperationException("Unimplemented method 'visitBreakStmt'");
         throw new BreakSignal();
     }
+
+      @Override
+        public Object visitCallExpr(Expr.Call expr) {
+            Object callee = evaluate(expr.callee);
+
+            List<Object> arguments = new ArrayList<>();
+            for (Expr argument : expr.arguments) { 
+                arguments.add(evaluate(argument));
+            }
+            LoxCallable function = (LoxCallable)callee;
+            if (!(callee instanceof LoxCallable)) {
+                throw new RuntimeError(expr.paren,
+                    "Can only call functions and classes.");
+                }
+
+            if (arguments.size() != function.arity()) {
+                throw new RuntimeError(expr.paren, "Expected " +
+                    function.arity() + " arguments but got " +
+                    arguments.size() + ".");
+                }
+
+
+            
+            return function.call(this, arguments);
+        }
+
+      
     
     
     
