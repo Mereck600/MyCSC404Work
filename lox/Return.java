@@ -1,6 +1,5 @@
 package lox;
 
-
 class Return extends RuntimeException {
   final Object value;
 

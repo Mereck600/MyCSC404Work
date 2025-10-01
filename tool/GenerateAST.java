@@ -17,28 +17,30 @@ public class GenerateAST {
                 "Assign   : Token name, Expr value",
                 "Binary   : Expr left, Token operator, Expr right",
                 "Call     : Expr callee, Token paren, List<Expr> arguments",
+                "Get      : Expr object, Token name",
                 "Grouping : Expr expression",
                 "Literal  : Object value",
                 "Logical  : Expr left, Token operator, Expr right",
+                "Set      : Expr object, Token name, Expr value",
+                "Super    : Token keyword, Token method",
+                "This     : Token keyword",
                 "Unary    : Token operator, Expr right",
-                "Variable : Token name",
-                "Comma    : Expr left, Token operator, Expr right",
-                "Ternary  : Expr condition, Expr thenBranch, Expr elseBranch"
-
-
-
+                "Variable : Token name"
         ));
+
         defineAst(outputDir, "Stmt", Arrays.asList(
-             "Block      : List<Stmt> statements",
+                "Block     : List<Stmt> statements",
+                "Class      : Token name, Expr.Variable superclass," +
+                            " List<Stmt.Function> methods",
                 "Expression : Expr expression",
                 "Function   : Token name, List<Token> params," +
-                  " List<Stmt> body",
+                            " List<Stmt> body",
                 "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
                 "Print      : Expr expression",
                 "Return     : Token keyword, Expr value",
-                "Var        : Token name, Expr initializer",
                 "While      : Expr condition, Stmt body",
-                "Break      : Token keyword"
+                "Var        : Token name, Expr initializer",
+                "Break      :"
         ));
     }
 
@@ -61,7 +63,8 @@ public class GenerateAST {
         // The AST classes.
         for (String type : types) {
             String className = type.split(":")[0].trim();
-            String fields = type.split(":")[1].trim();
+            String fields = "";
+            if (type.split(":").length > 1) { fields = type.split(":")[1].trim(); }
             defineType(writer, baseName, className, fields);
         }
 
@@ -91,7 +94,10 @@ public class GenerateAST {
         // Constructor.
         writer.print("    " + className + "(");
         String[] fields = fieldList.split(", ");
+        System.out.println("fields: " + Arrays.toString(fields) + " | " + fields.length);
+        
         for (int i = 0; i < fields.length; i++) {
+            if (fields[i].equals("")) { continue; }
             String[] parts = fields[i].trim().split(" ");
             String name = parts[1];
             writer.print(parts[0] + " " + name);
@@ -103,6 +109,7 @@ public class GenerateAST {
 
         // Store parameters in fields.
         for (String field : fields) {
+            if (field.equals("")) { continue; }
             String[] parts = field.trim().split(" ");
             String name = parts[1];
             writer.println("      this." + name + " = " + name + ";");
@@ -119,13 +126,25 @@ public class GenerateAST {
 
         // Fields.
         for (String field : fields) {
+            if (field.equals("")) { continue; }
             writer.println("    final " + field.trim() + ";");
         }
 
         writer.println();
         writer.println("    @Override");
         writer.println("    public String toString() {");
-        writer.println("      return \"" + className + "\";");
+        // implement a toString() method that returns the class name and the fields
+        writer.print("      return \"" + className + "(\"");
+        for (int i = 0; i < fields.length; i++) {
+            if (fields[i].equals("")) { writer.print(" + "); continue; }
+            String[] parts = fields[i].trim().split(" ");
+            String name = parts[1];
+            writer.print(" + " + name + " + ");
+            if (i < fields.length - 1) {
+                writer.print("\", \"");
+            }
+        }
+        writer.println("\")\";");
         writer.println("    }");
         writer.println("  }");
     }

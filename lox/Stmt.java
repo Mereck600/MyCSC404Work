@@ -8,13 +8,14 @@ import java.util.List;
 abstract class Stmt {
   interface Visitor<R> {
     R visitBlockStmt(Block stmt);
+    R visitClassStmt(Class stmt);
     R visitExpressionStmt(Expression stmt);
     R visitFunctionStmt(Function stmt);
     R visitIfStmt(If stmt);
     R visitPrintStmt(Print stmt);
     R visitReturnStmt(Return stmt);
-    R visitVarStmt(Var stmt);
     R visitWhileStmt(While stmt);
+    R visitVarStmt(Var stmt);
     R visitBreakStmt(Break stmt);
   }
   static class Block extends Stmt {
@@ -31,7 +32,28 @@ abstract class Stmt {
 
     @Override
     public String toString() {
-      return "Block";
+      return "Block(" + statements + ")";
+    }
+  }
+  static class Class extends Stmt {
+    Class(Token name, Expr.Variable superclass, List<Stmt.Function> methods) {
+      this.name = name;
+      this.superclass = superclass;
+      this.methods = methods;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitClassStmt(this);
+    }
+
+    final Token name;
+    final Expr.Variable superclass;
+    final List<Stmt.Function> methods;
+
+    @Override
+    public String toString() {
+      return "Class(" + name + ", " + superclass + ", " + methods + ")";
     }
   }
   static class Expression extends Stmt {
@@ -48,7 +70,7 @@ abstract class Stmt {
 
     @Override
     public String toString() {
-      return "Expression";
+      return "Expression(" + expression + ")";
     }
   }
   static class Function extends Stmt {
@@ -69,7 +91,7 @@ abstract class Stmt {
 
     @Override
     public String toString() {
-      return "Function";
+      return "Function(" + name + ", " + params + ", " + body + ")";
     }
   }
   static class If extends Stmt {
@@ -90,7 +112,7 @@ abstract class Stmt {
 
     @Override
     public String toString() {
-      return "If";
+      return "If(" + condition + ", " + thenBranch + ", " + elseBranch + ")";
     }
   }
   static class Print extends Stmt {
@@ -107,7 +129,7 @@ abstract class Stmt {
 
     @Override
     public String toString() {
-      return "Print";
+      return "Print(" + expression + ")";
     }
   }
   static class Return extends Stmt {
@@ -126,26 +148,7 @@ abstract class Stmt {
 
     @Override
     public String toString() {
-      return "Return";
-    }
-  }
-  static class Var extends Stmt {
-    Var(Token name, Expr initializer) {
-      this.name = name;
-      this.initializer = initializer;
-    }
-
-    @Override
-    <R> R accept(Visitor<R> visitor) {
-      return visitor.visitVarStmt(this);
-    }
-
-    final Token name;
-    final Expr initializer;
-
-    @Override
-    public String toString() {
-      return "Var";
+      return "Return(" + keyword + ", " + value + ")";
     }
   }
   static class While extends Stmt {
@@ -164,12 +167,30 @@ abstract class Stmt {
 
     @Override
     public String toString() {
-      return "While";
+      return "While(" + condition + ", " + body + ")";
+    }
+  }
+  static class Var extends Stmt {
+    Var(Token name, Expr initializer) {
+      this.name = name;
+      this.initializer = initializer;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitVarStmt(this);
+    }
+
+    final Token name;
+    final Expr initializer;
+
+    @Override
+    public String toString() {
+      return "Var(" + name + ", " + initializer + ")";
     }
   }
   static class Break extends Stmt {
-    Break(Token keyword) {
-      this.keyword = keyword;
+    Break() {
     }
 
     @Override
@@ -177,11 +198,10 @@ abstract class Stmt {
       return visitor.visitBreakStmt(this);
     }
 
-    final Token keyword;
 
     @Override
     public String toString() {
-      return "Break";
+      return "Break(" + ")";
     }
   }
 

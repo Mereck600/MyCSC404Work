@@ -1,8 +1,11 @@
 package lox;
 
 import lox.Expr.Assign;
+import lox.Expr.Call;
 import lox.Expr.Comma;
-import lox.Expr.Conditional;
+//import lox.Expr.Conditional;
+import lox.Expr.Logical;
+import lox.Expr.Ternary;
 import lox.Expr.Variable;
 
 class AstPrinter implements Expr.Visitor<String> {
@@ -94,11 +97,29 @@ class AstPrinter implements Expr.Visitor<String> {
         return expr.name.lexeme;
     }
 
-    @Override
-    public String visitConditionalExpr(Conditional expr) {
-        // TODO Auto-generated method stub
-        //throw new UnsupportedOperationException("Unimplemented method 'visitConditionalExpr'");
-         return parenthesize("?:", expr.condition, expr.thenBranch, expr.elseBranch);
+    // @Override
+    // public String visitConditionalExpr(Conditional expr) {
+    //     // TODO Auto-generated method stub
+    //     //throw new UnsupportedOperationException("Unimplemented method 'visitConditionalExpr'");
+    //      return parenthesize("?:", expr.condition, expr.thenBranch, expr.elseBranch);
 
-        }
+    //     }
+
+    @Override
+    public String visitCallExpr(Call expr) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitCallExpr'");
+    }
+
+    @Override
+    public String visitLogicalExpr(Logical expr) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitLogicalExpr'");
+    }
+
+    @Override
+    public String visitTernaryExpr(Ternary expr) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitTernaryExpr'");
+    }
 }
