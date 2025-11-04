@@ -19,6 +19,7 @@ typedef struct {
 typedef enum {
   PREC_NONE,
   PREC_ASSIGNMENT,  // =
+  PREC_CONDITIONAL, // :? 
   PREC_OR,          // or
   PREC_AND,         // and
   PREC_EQUALITY,    // == !=
@@ -36,7 +37,7 @@ typedef struct {
   ParseFn prefix;
   ParseFn infix;
   Precedence precedence;
-} ParseRule;
+} ParseRule;  
 
 Parser parser;
 Chunk* compilingChunk;
@@ -44,6 +45,7 @@ Chunk* compilingChunk;
 static Chunk* currentChunk() {
   return compilingChunk;
 }
+
 
 
 /*********************************/
@@ -145,6 +147,7 @@ static void endCompiler() {
 static void expression();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
+static void conditional(void);
 
 static void binary() {
   traceEnter("binary");
@@ -215,6 +218,8 @@ static void unary() {
 }
 
 ParseRule rules[] = {
+  [TOKEN_QUESTION] = { NULL, conditional, PREC_CONDITIONAL },
+  [TOKEN_COLON]    = { NULL, NULL,        PREC_NONE },
   [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE}, 
@@ -302,3 +307,24 @@ bool compile(const char* source, Chunk* chunk) {
   traceExit();
   return !parser.hadError;
 }
+
+
+/*
+Work for ext7 
+*/
+
+
+// definition
+static void conditional(void) {
+  fprintf(stderr, "[parser] saw ?:  parsing then-arm...\n");
+
+  // right-associative: parse each arm at the same precedence
+  parsePrecedence(PREC_CONDITIONAL);
+
+  consume(TOKEN_COLON, "Expect ':' after then branch of conditional operator.");
+  fprintf(stderr, "[parser] parsing else-arm...\n");
+
+  parsePrecedence(PREC_CONDITIONAL);
+}
+
+

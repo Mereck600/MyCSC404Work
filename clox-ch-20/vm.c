@@ -15,6 +15,38 @@ static void resetStack() {
   vm.stackTop = vm.stack;
 }
 
+static ObjString* valueToString(Value value) {
+  if (IS_STRING(value)) return AS_STRING(value);
+
+  char buffer[64];
+
+  if (IS_NUMBER(value)) {
+    int length = snprintf(buffer, sizeof(buffer), "%g", AS_NUMBER(value));
+    return copyString(buffer, length);
+  }
+
+  if (IS_BOOL(value)) {
+    return copyString(AS_BOOL(value) ? "true" : "false",
+                      AS_BOOL(value) ? 4 : 5);
+  }
+
+  if (IS_NIL(value)) {
+    return copyString("nil", 3);
+  }
+
+  return copyString("<unknown>", 9);
+}
+
+static ObjString* concatObjStrings(ObjString* a, ObjString* b) {
+  int length = a->length + b->length;
+  char* chars = ALLOCATE(char, length + 1);
+  memcpy(chars, a->chars, a->length);
+  memcpy(chars + a->length, b->chars, b->length);
+  chars[length] = '\0';
+  return takeString(chars, length);
+}
+
+
 static void runtimeError(const char* format, ...) {
   va_list args;
   va_start(args, format);
@@ -117,9 +149,20 @@ static InterpretResult run() {
       case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
       case OP_LESS:     BINARY_OP(BOOL_VAL, <); break;
       case OP_ADD: {
-        if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
-          concatenate();
-        } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+        Value right = peek(0);
+        Value left  = peek(1);
+
+        if (IS_STRING(left) || IS_STRING(right)) {
+          right = pop();
+          left  = pop();
+
+          ObjString* sa = IS_STRING(left)  ? AS_STRING(left)  : valueToString(left);
+          ObjString* sb = IS_STRING(right) ? AS_STRING(right) : valueToString(right);
+
+          ObjString* result = concatObjStrings(sa, sb);
+          push(OBJ_VAL(result));
+        }
+        else if (IS_NUMBER(left) && IS_NUMBER(right)) {
           double b = AS_NUMBER(pop());
           double a = AS_NUMBER(pop());
           push(NUMBER_VAL(a + b));
