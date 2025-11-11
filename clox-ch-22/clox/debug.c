@@ -4,6 +4,7 @@
 #include "value.h"
 #include "table.h"
 #include "vm.h"
+#include "object.h"
 
 
 void disassembleVMState() {
