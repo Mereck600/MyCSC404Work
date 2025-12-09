@@ -63,30 +63,34 @@ public class Parser {
   }
 
 
-  private Stmt.Function method() {
-    Token name = consume(IDENTIFIER, "Expect method name.");
-    List<Token> parameters = new ArrayList<>();
+    private Stmt.Function method() {
+        Token name = consume(IDENTIFIER, "Expect method name.");
 
-    if (match(LEFT_PAREN)) {
-        // Normal method: parse parameter list like in function("method")
-        if (!check(RIGHT_PAREN)) {
-            do {
-                if (parameters.size() >= 255) {
-                    error(peek(), "Can't have more than 255 parameters.");
-                }
-                parameters.add(consume(IDENTIFIER, "Expect parameter name."));
-            } while (match(COMMA));
+        List<Token> parameters = new ArrayList<>();
+        boolean isGetter = false;
+
+        if (match(LEFT_PAREN)) {
+            if (!check(RIGHT_PAREN)) {
+                do {
+                    if (parameters.size() >= 255) {
+                        error(peek(), "Can't have more than 255 parameters.");
+                    }
+                    parameters.add(
+                        consume(IDENTIFIER, "Expect parameter name."));
+                } while (match(COMMA));
+            }
+            consume(RIGHT_PAREN, "Expect ')' after parameters.");
+        } else {
+            // getter
+            isGetter = true;
         }
-        consume(RIGHT_PAREN, "Expect ')' after parameters.");
-    } else {
-        // Getter: no parameter list; next must be '{'
-        // parameters remains empty
+
+        consume(LEFT_BRACE, "Expect '{' before method body.");
+        List<Stmt> body = block();
+        return new Stmt.Function(name, parameters, body, isGetter);
     }
 
-    consume(LEFT_BRACE, "Expect '{' before method body.");
-    List<Stmt> body = block();
-    return new Stmt.Function(name, parameters, body);
-}
+
 
 
     private Stmt statement() {
@@ -230,7 +234,7 @@ public class Parser {
 
         consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
         List<Stmt> body = block();
-        return new Stmt.Function(name, parameters, body);
+        return new Stmt.Function(name, parameters, body, false);
 
     }
 

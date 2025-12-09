@@ -3,6 +3,7 @@ package lox;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {  
@@ -110,13 +111,25 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitGetExpr(Expr.Get expr) {
         Object object = evaluate(expr.object);
-        if (object instanceof LoxInstance) {
-        return ((LoxInstance) object).get(expr.name);
+
+        if (!(object instanceof LoxInstance)) {
+            throw new RuntimeError(expr.name,
+                "Only instances have properties.");
         }
 
-        throw new RuntimeError(expr.name,
-            "Only instances have properties.");
+        Object value = ((LoxInstance)object).get(expr.name);
+
+        // AUTO-CALL GETTERS
+        if (value instanceof LoxFunction) {
+            LoxFunction func = (LoxFunction) value;
+            if (func.isGetter()) {
+                return func.call(this, Collections.emptyList());
+            }
+        }
+
+        return value;
     }
+
 
     @Override
     public Object visitGroupingExpr(Expr.Grouping expr) {
